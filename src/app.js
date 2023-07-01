@@ -5,10 +5,7 @@ import dayjs from "dayjs";
 import dotenv from "dotenv";
 import joi from "joi";
 
-/*const data = Date.now();
-
-const currentTime = dayjs().format("HH:mm:ss");
-console.log(currentTime); */
+//fuser -k 5000/tcp
 
 // Criação do app
 const app = express();
@@ -101,7 +98,7 @@ app.post("/messages", async (req, res) => {
   const schemaMessage = joi.object({
     to: joi.string().required(),
     text: joi.string().required(),
-    type: joi.string().allow("message", "private_message"),
+    type: joi.string().allow("message", "private_message").required(),
   });
 
   const validation2 = schemaMessage.validate(req.body, { abortEarly: false });
@@ -122,6 +119,27 @@ app.post("/messages", async (req, res) => {
     });
 
     res.sendStatus(201);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+app.get("/messages", async (req, res) => {
+  const { user } = req.headers;
+  let limit = parseInt(req.query.limit);
+
+  if (!req.query.limit) {
+    limit = 0;
+  }
+
+  try {
+    const messages = await db
+      .collection("messages")
+      .find({ $or: [{ from: user }, { to: { $in: ["Todos", user] } }] })
+      .sort({ _id: -1 })
+      .limit(limit)
+      .toArray();
+    res.send(messages);
   } catch (err) {
     res.status(500).send(err.message);
   }

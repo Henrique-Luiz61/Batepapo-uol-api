@@ -21,9 +21,6 @@ const mongoClient = new MongoClient(process.env.DATABASE_URL);
 try {
   await mongoClient.connect(); // top level await
   console.log("MongoDB conectado com sucesso!");
-
-  const result = await db.collection("messages").deleteMany({ to: "todos" });
-  console.log("resultado: ", result);
 } catch (err) {
   (err) => console.log(err.message);
 }
@@ -193,6 +190,45 @@ app.post("/status", async (req, res) => {
     res.status(500).send(err.message);
   }
 });
+
+/*app.delete("/messages", async (req, res) => {
+  try {
+    const result = await db.collection("messages").deleteMany({ to: "todos" });
+    console.log(result);
+    res.sendStatus(200);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});*/
+
+setInterval(async () => {
+  const dateNow = Date.now();
+
+  try {
+    const partRemoved = await db
+      .collection("participants")
+      .find({
+        lastStatus: { $lt: dateNow - 10000 },
+      })
+      .toArray();
+    console.log(partRemoved);
+
+    await db.collection("participants").deleteMany({
+      lastStatus: { $lt: dateNow - 10000 },
+    });
+
+    for (let i = 0; i < partRemoved.length; i++) {
+      await db.collection("messages").insertOne({
+        from: partRemoved[i],
+        to: "Todos",
+        text: "sai da sala...",
+        time: dayjs().format("HH:mm:ss"),
+      });
+    }
+  } catch (err) {
+    console.log(err.message);
+  }
+}, 15000);
 
 // Ligar a aplicação do servidor para ouvir requisições
 const PORT = 5000;

@@ -98,7 +98,7 @@ app.post("/messages", async (req, res) => {
   const schemaMessage = joi.object({
     to: joi.string().required(),
     text: joi.string().required(),
-    type: joi.string().allow("message", "private_message").required(),
+    type: joi.string().valid("message", "private_message").required(),
   });
 
   const validation2 = schemaMessage.validate(req.body, { abortEarly: false });
@@ -161,6 +161,31 @@ app.get("/messages", async (req, res) => {
       .limit(limit)
       .toArray();
     res.send(messages);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+app.post("/status", async (req, res) => {
+  const { user } = req.headers;
+
+  if (!user) {
+    return res.sendStatus(404);
+  }
+
+  try {
+    const nameUser = await db
+      .collection("participants")
+      .findOne({ name: user });
+    if (!nameUser) return res.sendStatus(404);
+
+    const lastStatus = Date.now();
+
+    await db
+      .collection("participants")
+      .updateOne({ name: user }, { $et: { lastStatus: lastStatus } });
+
+    res.sendStatus(200);
   } catch (err) {
     res.status(500).send(err.message);
   }

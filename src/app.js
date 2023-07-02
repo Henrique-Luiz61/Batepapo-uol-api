@@ -126,16 +126,37 @@ app.post("/messages", async (req, res) => {
 
 app.get("/messages", async (req, res) => {
   const { user } = req.headers;
-  let limit = parseInt(req.query.limit);
+  let limit = 0;
+  let validation2 = {};
 
-  if (!req.query.limit) {
-    limit = 0;
+  if (req.query.limit) {
+    limit = parseInt(req.query.limit);
+  }
+
+  const schemaQuery = joi.string().pattern(/^\d+$/).not("0");
+  const validation1 = schemaQuery.validate(req.query.limit);
+
+  const schemaLimit = joi.number().integer().min(1);
+
+  if (limit !== 0) {
+    validation2 = schemaLimit.validate(limit);
+  }
+
+  if (validation1.error || validation2.error) {
+    console.log(validation1.error);
+    return res.sendStatus(422);
   }
 
   try {
     const messages = await db
       .collection("messages")
-      .find({ $or: [{ from: user }, { to: { $in: ["Todos", user] } }] })
+      .find({
+        $or: [
+          { from: user },
+          { to: { $in: ["Todos", user] } },
+          { type: { $in: ["status", "message"] } },
+        ],
+      })
       .sort({ _id: -1 })
       .limit(limit)
       .toArray();

@@ -222,6 +222,7 @@ setInterval(async () => {
         from: partRemoved[i],
         to: "Todos",
         text: "sai da sala...",
+        type: "status",
         time: dayjs().format("HH:mm:ss"),
       });
     }

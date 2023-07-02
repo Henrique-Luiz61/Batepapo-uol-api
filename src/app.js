@@ -21,6 +21,9 @@ const mongoClient = new MongoClient(process.env.DATABASE_URL);
 try {
   await mongoClient.connect(); // top level await
   console.log("MongoDB conectado com sucesso!");
+
+  const result = await db.collection("messages").deleteMany({ to: "todos" });
+  console.log("resultado: ", result);
 } catch (err) {
   (err) => console.log(err.message);
 }
@@ -183,7 +186,7 @@ app.post("/status", async (req, res) => {
 
     await db
       .collection("participants")
-      .updateOne({ name: user }, { $et: { lastStatus: lastStatus } });
+      .updateOne({ name: user }, { $set: { lastStatus: lastStatus } });
 
     res.sendStatus(200);
   } catch (err) {

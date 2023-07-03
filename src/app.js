@@ -32,8 +32,6 @@ mongoClient
   .then(() => (db = mongoClient.db()))
   .catch((erro) => console.log(erro.message));
 
-// Variáveis globais
-
 // Funções (endpoints)
 app.post("/participants", async (req, res) => {
   const { name } = req.body;
@@ -191,16 +189,6 @@ app.post("/status", async (req, res) => {
   }
 });
 
-/*app.delete("/messages", async (req, res) => {
-  try {
-    const result = await db.collection("messages").deleteMany({ to: "todos" });
-    console.log(result);
-    res.sendStatus(200);
-  } catch (err) {
-    res.status(500).send(err.message);
-  }
-});*/
-
 setInterval(async () => {
   const dateNow = Date.now();
 
@@ -219,7 +207,7 @@ setInterval(async () => {
 
     for (let i = 0; i < partRemoved.length; i++) {
       await db.collection("messages").insertOne({
-        from: partRemoved[i],
+        from: partRemoved[i].name,
         to: "Todos",
         text: "sai da sala...",
         type: "status",
